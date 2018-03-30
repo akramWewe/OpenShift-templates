@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: consul-volume-2
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    path: /nfs_openshift_pp_pv8/pv8
+    server: infini1-nas.mousquetaires.com
+  persistentVolumeReclaimPolicy: Recycle

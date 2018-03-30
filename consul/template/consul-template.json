@@ -1,0 +1,674 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: consul-ocp
+objects:
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: consulsa
+    labels: 
+     app: consul
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: consul
+    labels: 
+     app: consul
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - annotations: 
+        openshift.io/display-name: Consul
+      from:
+        kind: DockerImage
+        name: docker-registry.default.svc:5000/consul/consul:1.0.0
+      generation: 2
+      importPolicy: {}
+      name: 1.0.0
+      referencePolicy:
+        type: Source
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: consul
+    name: consul-1
+  spec:
+    replicas: 1
+    selector:
+      app: consul
+      deploymentconfig: consul-1
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: consul
+          deploymentconfig: consul-1
+      spec:
+        containers:
+        - args:
+          - agent
+          - -ui
+          - -bootstrap-expect=$(bootstrap_expect)
+          - -server
+          - -client=0.0.0.0
+          - -bind=$(POD_IP_1)
+          - -data-dir=$(data_dir)
+          - -config-file=$(config_file)
+          - -encrypt=$(GOSSIP_ENCRYPTION_KEY)
+          - -rejoin
+          - -retry-join=consul-2.${NAMESPACE}.svc
+          - -retry-join=consul-3.${NAMESPACE}.svc
+          - -disable-host-node-id
+          env:
+          - name: GOSSIP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                key: gossip-encryption-key
+                name: consul
+          - name: POD_IP_1
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: data_dir
+            value: /tmp/consul/data
+          - name: bootstrap_expect
+            value: "3"
+          - name: config_file
+            value: /consul/config/server.json
+          image: consul@sha256:08a86c54180ba1aecd3e6e276d76b86d5c3dc50e32c7f0f7e5ca9bc31c882b6c
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/sh
+                - -c
+                - consul leave
+          name: consul
+          ports:
+          - containerPort: 8300
+            name: server
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-tcp
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-udp
+            protocol: UDP
+          - containerPort: 8302
+            name: serfwan-tcp
+            protocol: TCP
+          - containerPort: 8302
+            name: serfwan-udp
+            protocol: UDP
+          - containerPort: 8400
+            name: rpc-port
+            protocol: TCP
+          - containerPort: 8500
+            name: api-port
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-tcp
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-udp
+            protocol: UDP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /v1/health/state/any
+              port: 8500
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /consul/config
+            name: config
+          - mountPath: /etc/tls
+            name: tls
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+        serviceAccount: consulsa
+        serviceAccountName: consulsa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: consul
+          name: config
+        - name: tls
+          secret:
+            defaultMode: 420
+            secretName: consul
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - consul
+        from:
+          kind: ImageStreamTag
+          name: consul:1.0.0
+          namespace: consul
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: consul
+    name: consul-2
+  spec:
+    replicas: 1
+    selector:
+      app: consul
+      deploymentconfig: consul-2
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: consul
+          deploymentconfig: consul-2
+      spec:
+        containers:
+        - args:
+          - agent
+          - -ui
+          - -data-dir=$(data_dir)
+          - -client=0.0.0.0
+          - -bootstrap-expect=$(bootstrap_expect)
+          - -server
+          - -bind=$(POD_IP_2)
+          - -config-file=$(config_file)
+          - -encrypt=$(GOSSIP_ENCRYPTION_KEY)
+          - -rejoin
+          - -retry-join=consul-1.${NAMESPACE}.svc
+          - -retry-join=consul-3.${NAMESPACE}.svc
+          - -disable-host-node-id
+          env:
+          - name: GOSSIP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                key: gossip-encryption-key
+                name: consul
+          - name: POD_IP_2
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: data_dir
+            value: /tmp/consul/data
+          - name: bootstrap_expect
+            value: "3"
+          - name: config_file
+            value: /consul/config/server.json
+          image: consul@sha256:08a86c54180ba1aecd3e6e276d76b86d5c3dc50e32c7f0f7e5ca9bc31c882b6c
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/sh
+                - -c
+                - consul leave
+          name: consul
+          ports:
+          - containerPort: 8300
+            name: server
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-tcp
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-udp
+            protocol: UDP
+          - containerPort: 8302
+            name: serfwan-tcp
+            protocol: TCP
+          - containerPort: 8302
+            name: serfwan-udp
+            protocol: UDP
+          - containerPort: 8400
+            name: rpc-port
+            protocol: TCP
+          - containerPort: 8500
+            name: api-port
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-tcp
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-udp
+            protocol: UDP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /v1/health/state/any
+              port: 8500
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /consul/config
+            name: config
+          - mountPath: /etc/tls
+            name: tls
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+        serviceAccount: consulsa
+        serviceAccountName: consulsa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: consul
+          name: config
+        - name: tls
+          secret:
+            defaultMode: 420
+            secretName: consul
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - consul
+        from:
+          kind: ImageStreamTag
+          name: consul:1.0.0
+          namespace: consul
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: consul
+    name: consul-3
+  spec:
+    replicas: 1
+    selector:
+      app: consul
+      deploymentconfig: consul-3
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: consul
+          deploymentconfig: consul-3
+      spec:
+        containers:
+        - args:
+          - agent
+          - -ui
+          - -data-dir=$(data_dir)
+          - -client=0.0.0.0
+          - -bootstrap-expect=$(bootstrap_expect)
+          - -server
+          - -bind=$(POD_IP_3)
+          - -config-file=$(config_file)
+          - -encrypt=$(GOSSIP_ENCRYPTION_KEY)
+          - -rejoin
+          - -retry-join=consul-1.${NAMESPACE}.svc
+          - -retry-join=consul-2.${NAMESPACE}.svc
+          - -disable-host-node-id
+          env:
+          - name: GOSSIP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                key: gossip-encryption-key
+                name: consul
+          - name: POD_IP_3
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: data_dir
+            value: /tmp/consul/data
+          - name: bootstrap_expect
+            value: "3"
+          - name: config_file
+            value: /consul/config/server.json
+          image: consul@sha256:08a86c54180ba1aecd3e6e276d76b86d5c3dc50e32c7f0f7e5ca9bc31c882b6c
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/sh
+                - -c
+                - consul leave
+          name: consul
+          ports:
+          - containerPort: 8300
+            name: server
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-tcp
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-udp
+            protocol: UDP
+          - containerPort: 8302
+            name: serfwan-tcp
+            protocol: TCP
+          - containerPort: 8302
+            name: serfwan-udp
+            protocol: UDP
+          - containerPort: 8400
+            name: rpc-port
+            protocol: TCP
+          - containerPort: 8500
+            name: api-port
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-tcp
+            protocol: TCP
+          - containerPort: 8600
+            name: consuldns-udp
+            protocol: UDP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /v1/health/state/any
+              port: 8500
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /consul/config
+            name: config
+          - mountPath: /etc/tls
+            name: tls
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+        serviceAccount: consulsa
+        serviceAccountName: consulsa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: consul
+          name: config
+        - name: tls
+          secret:
+            defaultMode: 420
+            secretName: consul
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - consul
+        from:
+          kind: ImageStreamTag
+          name: consul:1.0.0
+          namespace: consul
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  data:
+    server.json: |
+      {
+        "ca_file": "/etc/tls/ca.pem",
+        "cert_file": "/etc/tls/consul.pem",
+        "key_file": "/etc/tls/consul-key.pem",
+        "verify_incoming": false,
+        "verify_outgoing": false,
+        "verify_server_hostname": false,
+        "data_dir": "/opt/consul",
+        "ports": {
+          "https": 8443
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    name: consul
+- apiVersion: v1
+  data:
+    ca.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURhakNDQWxLZ0F3SUJBZ0lVSXhDOFNqM2NXek5XYkZmOGJBQzlNNndCTGwwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1RURUxNQWtHQTFVRUJoTUNSbEl4RmpBVUJnTlZCQWdURFUxdmRYTnhkV1YwWVdseVpYTXhFakFRQmdOVgpCQWNUQ1UxdmJuUnliM1ZuWlRFU01CQUdBMVVFQ2hNSlQzQmxibE5vYVdaME1CNFhEVEU0TURJeU16RTBNRE13Ck1Gb1hEVEl6TURJeU1qRTBNRE13TUZvd1RURUxNQWtHQTFVRUJoTUNSbEl4RmpBVUJnTlZCQWdURFUxdmRYTngKZFdWMFlXbHlaWE14RWpBUUJnTlZCQWNUQ1UxdmJuUnliM1ZuWlRFU01CQUdBMVVFQ2hNSlQzQmxibE5vYVdaMApNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXJaUHVsYjlvd3E1UkoxQzFWZk04Cnkvejg4U21qcGdjVjRwdXFnU3VxSVNVZVFDbmZ5RFhxL3hMNkxBRk9KR3NNK1JZY0RaVTdYbTFVVisxS0NNWVoKaXRnSUt4QVo4eVRJaTlFNzdrTVFqeitpc3BZNmNndmVadGJTWVkwMFJFL0h2aTRxZUFBOU52bEdsbkF2QjJ1Rgo5TUhQc1l4cWlacVY1Y2dxRWo3U2JGNlJRVWhyR0ZGUjk2eGp6NThlQ1JRZkFhZzl4VUluaGZrTExlNlBBZkM2Cnlna2I0U2VncVU3V3hmOTdRZXpzdWI5cDZBRnluQiszRk5YNkltYzlsZTdMbE02VGJTVEFUSzFUZU00dDFqcU0KdzUwQUNVWXVtdW9ZVEtsOXdGWVZnQ29ZZndMbWNWeTVuWk9GRFZvTk8rZk5VU2M5RWlIMjd4UWRYeGx0cm44MgpEd0lEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FRWXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WCkhRNEVGZ1FVMExvaFBic3o1NkMwKzVEcU5oR3BXTVY4N29Bd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFJbC8KMHh3TnNDTDJqTHhHbU56QmxrUGRsYVZGTFNlSVhsSWExR25pUmRIUnIyUzlQY3h1UlpTM1U3QU5CMnpjcEJGTApHc0tqMktXNkJlRXpCUElBWG5qNVI1RTdCZG1FMktXWGNOYW40Wnd2MThDanVYSXI5TGwvcjgwT2lGTFU2amEvCkIzY2Ywd2dJUkllNjRPbWdTZVVPUnFPNFQrQ25sdWZiRkhhWDhPWFY3ejRqelZDdHdUQnIrbTl1ejBBVEM1d3AKOEJRY2ZSU3pjeUlXMG1TNk9NTzhoUUs4cVoyK0NWeXBoVmp1RHEyVGxKU01PZUt1Zjh1TVVHNVhLZ29icVJzdgpMb0pQdkhDZWJ5ZGZVa1dBNHFTemxnME1ZUzRsTUF4VkMreUYxaDZSVzk3SktSZUFTQ2dvaUpyMjFaN3hNdjcvCitBanVUSUNiMTR4WVNPRlVPMUE9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    consul-key.pem: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBeEdZMmlLOVFWYWEyOUs1aTlDSmZUN01ReHlNNnhualBmREh6VFkwVVlMSHZ4d0VmCjBPU3oxLytwMEFrYzhPbXc4YnhTWGNGVzFPK2FyLy9BMFpiRTVMWkJ4dzFyWlR1a0lqdlZPbnZzTC82Y0xCVHUKSlBIYjVYOU1KTjI5MEY1MFMwV1JQam1FZnZSa2tudEUxTVRxaTMyRlNjV0dwdEFzZVBwMmF1aFluKzBKanBqYQpWVHE4eFZ6dzJML3poTTB2RjhHUVROeFJGbDdsOHFxeUlnMFR2M3M5UDJpTXcyMXpXeGNYQ1JsVTZBUmJETzlSCjRzSmRrS2ZRb0VTUlNUVndZVmN4TGtENVovVU9YTzQyM2ZjRCtnZVUyU0ltNjI5MnZibG5pcE9vSnhzVW5SbzkKNzJNN2RzdnBZT3gyUUdTTmlaNDQ5TWdsYlNkYVhRdjhIeUYrWVFJREFRQUJBb0lCQUJoT2lpdEtmMGZLZFZROQpEUFFvR09HMVNMdE1xZWFNWnlsNHlTTHM5ZnV0cWY1WUxrYmROMERoWEhQcDNOSVlLaFVRK0tTdjIvNUlsVDE1CkNyVWwwc0ozcUJacG04UVFxSlN3RVFqRzg0bFJHcVQrQmljK1k3ZTRsSVR2aUtGMFB6SmRyc2NqdVRrNUtBVlYKQ2tUSEJqd3pVYjY2bXBxa293eHAreVBxRTZYZktacHhpdi9icWlEVEVXck1xY0lUay8vOEl0NFhKV0tvaDFCZQp2TFVvMlZycDVKUW5mcVJiTE1Db0l3KzBwWXlhbEVGYW42di9xTVBrV1p6U0c4SkoxbHpxR3c2eDloN0NDTTRoCnZabFFFNkNlend5dEQ0MVFmcGwyYjBEa0NhM3ExSUI4R0tYZXo2aHZMSzQ0WEh2N1gwdjc0RW5UR215TllmRmcKQm5IQU5pMENnWUVBelVSTElTK1owMGVoOHJHSkhaOUJxQXhNWnhnRG9XeDhLeGpQVmNQZjVISnJHVjZVNVZzeApNdlNNYTY2ZWpCVHdWTDI3NHdCYzJxWWlOQ0ZwbmNacGt3ck84VmpXVkZOYXpsWkZROFdDUmZJT0c3ZUhaVmgxCmt0SmRNUktMOTlTZzVoRnZ2SVpqUjhqbVBTWDhubnFFbjZwejhzWG5xeVpvNkRpT0IwdWVnZ3NDZ1lFQTlQRGEKSVFGUHEvWVNDSXFScjJZdWN0UEhJZUI3QnNmM2o4MjBNSmd6bTNDd1ZXM2dHSWZGaXd6WWdxU3c5L0JWREFZegpueWVhQ2NOeHhqOHIrLzBVb0U0RytOTkZEMndHVFFZN2dEVTRKUjlaSmZNc1dFVnRPSW5sTzVKWDl2V2pHc2NjCk1CdDRCMlhZb2s2cGIreENQSHRNR2FCODdFb1llaEtBclNmalVNTUNnWUIxVTlmdHZCdWMzSkVBKytGNEFST3kKVG5WTmFEaUxDRXRoQnVsY0NIM3RRa2xkVXVhZ3dxTTRrUGZDaFNreXdMVXVldFR1UjhMTFo3S2RRWXZ4RnZ3NQpoREFOVzg0R25TNkdTbUdFLzF3YlJ1UXhpNUhrcDg5c2dMbXIxd0lTUW9ORmZpbjBCSXl5OTI1Qy9YZUx6bFFJClA1SE83cmdnNSsrRzdPeWgxdU5mU1FLQmdRQ2p2NlREN2VGNmY3NGNrYTdGaU5WQ2xNd0tuTTBDZ29yQlMyN00KRWVSbVpWYXROaEJidGVEZGpjL3N2dmRFT2hwUk9KQW9OVXhvZkkzQ1VCY3lsa1hFeVlVbHNlLzRXR3A1OGRHegphMkRHaUllTHRGOFFBQkg5ZTBxUm9jdEc0WDZSOTB5ajZLazhvTnpMM1RTdkMwNVlxc0Q4WE90RytGNFd0ZW5xCldNRkNDd0tCZ1FDSStQVmNpaXNkaGxHazVLZUNZQ3FhN0RLUnAxQVFRMHdqUXE3R3RlZnhkZFFFMkxDOE5FUXQKdGRoNlJsZ1k4QWVJTE5EOVFETE9yZUgvWExXVXBjVzN1SUtOL0V6QWFtMGVDYXRQMTVacHJWUmFXUUVtSW5PSQoyMThpeFRENVk0bUFZT0dEa3dmU2k2UFRnS2dxRUNPb1YvL0Q5aGtOTkJWNmJrb0EvVUZNQUE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+    consul.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVRGlNNE1VQVRLMEVuR1hrM0NhR3hZTGd3LzRZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1RURUxNQWtHQTFVRUJoTUNSbEl4RmpBVUJnTlZCQWdURFUxdmRYTnhkV1YwWVdseVpYTXhFakFRQmdOVgpCQWNUQ1UxdmJuUnliM1ZuWlRFU01CQUdBMVVFQ2hNSlQzQmxibE5vYVdaME1CNFhEVEU0TURJeU16RTBNVEV3Ck1Gb1hEVEU1TURJeU16RTBNVEV3TUZvd2ZqRUxNQWtHQTFVRUJoTUNWVk14RHpBTkJnTlZCQWdUQms5eVpXZHYKYmpFUk1BOEdBMVVFQnhNSVVHOXlkR3hoYm1ReEZ6QVZCZ05WQkFvVERraHBaMmgwYjNkbGNpQk1ZV0p6TVE4dwpEUVlEVlFRTEV3WkRiMjV6ZFd3eElUQWZCZ05WQkFNVEdITmxjblpsY2k1a1l6RXVZMngxYzNSbGNpNXNiMk5oCmJEQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQU1SbU5vaXZVRldtdHZTdVl2UWkKWDArekVNY2pPc1o0ejN3eDgwMk5GR0N4NzhjQkg5RGtzOWYvcWRBSkhQRHBzUEc4VWwzQlZ0VHZtcS8vd05HVwp4T1MyUWNjTmEyVTdwQ0k3MVRwNzdDLytuQ3dVN2lUeDIrVi9UQ1RkdmRCZWRFdEZrVDQ1aEg3MFpKSjdSTlRFCjZvdDloVW5GaHFiUUxIajZkbXJvV0ovdENZNlkybFU2dk1WYzhOaS84NFROTHhmQmtFemNVUlplNWZLcXNpSU4KRTc5N1BUOW9qTU50YzFzWEZ3a1pWT2dFV3d6dlVlTENYWkNuMEtCRWtVazFjR0ZYTVM1QStXZjFEbHp1TnQzMwpBL29IbE5raUp1dHZkcjI1WjRxVHFDY2JGSjBhUGU5ak8zYkw2V0RzZGtCa2pZbWVPUFRJSlcwbldsMEwvQjhoCmZtRUNBd0VBQWFPQnF6Q0JxREFPQmdOVkhROEJBZjhFQkFNQ0JhQXdIUVlEVlIwbEJCWXdGQVlJS3dZQkJRVUgKQXdFR0NDc0dBUVVGQndNQ01Bd0dBMVVkRXdFQi93UUNNQUF3SFFZRFZSME9CQllFRkhQR3BsSUZiNG9sRUhIdQpDajlKYktTUjV4WXNNQjhHQTFVZEl3UVlNQmFBRk5DNklUMjdNK2VndFB1UTZqWVJxVmpGZk82QU1Da0dBMVVkCkVRUWlNQ0NDR0hObGNuWmxjaTVrWXpFdVkyeDFjM1JsY2k1c2IyTmhiSWNFZndBQUFUQU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBRlhhODdJa2RhVmZPWmt3ekJmcFVPNjNxS1ZCY0dBbkhhbGdZTDMwRlRMSnF2cWt3REFYQgpxYWNkc3VWaEI2Wmo3QTRaQmtYYmpyb3phdXBteHVSWGtjd0g4M0FmOGZKc2ZzTi9HeGVCQW5DTHVDREh0bVdYCmlDWFRQblVWMWlrUTVXMWtzUlM0L1ZGVThPRXJ2WEprK25qWCtnbEVvMU9ldGdkMjM1SEdkYjFiTERaSjYwV1oKTDRibzF6Z0lLbGpubXM1d1NyaE9kTWVJMFZHUWxMcW1XWW9WN3JjNE42c2gvTllvMFV0b3l1QUQydDZHK25iTApnYWJ3anF5WlJSTGpHMG5ZWVF5K2JBVFU4ZEc4VTVQR2hPbjNOWGErQ0tZTEJNSm84bTZmVWlTdTBZbUJLTkZ4CjhEQU9RY0l1bnlVZlV6WXpiNTlJNmU3aXlpSFR4cTVhTFE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    gossip-encryption-key: c2VNTmJRejZGUkFZSW13UVVadGxEUT09
+  kind: Secret
+  metadata:
+    creationTimestamp: null
+    name: consul
+  type: Opaque
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: consul-1
+    name: consul-1
+  spec:
+    ports:
+    - name: http
+      port: 8500
+      protocol: TCP
+      targetPort: 8500
+    - name: rpc
+      port: 8400
+      protocol: TCP
+      targetPort: 8400
+    - name: serflan-tcp
+      port: 8301
+      protocol: TCP
+      targetPort: 8301
+    - name: serflan-udp
+      port: 8301
+      protocol: UDP
+      targetPort: 8301
+    - name: serfwan-tcp
+      port: 8302
+      protocol: TCP
+      targetPort: 8302
+    - name: serfwan-udp
+      port: 8302
+      protocol: UDP
+      targetPort: 8302
+    - name: server
+      port: 8300
+      protocol: TCP
+      targetPort: 8300
+    - name: consuldns
+      port: 8600
+      protocol: TCP
+      targetPort: 8600
+    selector:
+      deploymentconfig: consul-1
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: consul-2
+    name: consul-2
+  spec:
+    ports:
+    - name: http
+      port: 8500
+      protocol: TCP
+      targetPort: 8500
+    - name: rpc
+      port: 8400
+      protocol: TCP
+      targetPort: 8400
+    - name: serflan-tcp
+      port: 8301
+      protocol: TCP
+      targetPort: 8301
+    - name: serflan-udp
+      port: 8301
+      protocol: UDP
+      targetPort: 8301
+    - name: serfwan-tcp
+      port: 8302
+      protocol: TCP
+      targetPort: 8302
+    - name: serfwan-udp
+      port: 8302
+      protocol: UDP
+      targetPort: 8302
+    - name: server
+      port: 8300
+      protocol: TCP
+      targetPort: 8300
+    - name: consuldns
+      port: 8600
+      protocol: TCP
+      targetPort: 8600
+    selector:
+      deploymentconfig: consul-2
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: consul-3
+    name: consul-3
+  spec:
+    ports:
+    - name: http
+      port: 8500
+      protocol: TCP
+      targetPort: 8500
+    - name: rpc
+      port: 8400
+      protocol: TCP
+      targetPort: 8400
+    - name: serflan-tcp
+      port: 8301
+      protocol: TCP
+      targetPort: 8301
+    - name: serflan-udp
+      port: 8301
+      protocol: UDP
+      targetPort: 8301
+    - name: serfwan-tcp
+      port: 8302
+      protocol: TCP
+      targetPort: 8302
+    - name: serfwan-udp
+      port: 8302
+      protocol: UDP
+      targetPort: 8302
+    - name: server
+      port: 8300
+      protocol: TCP
+      targetPort: 8300
+    - name: consuldns
+      port: 8600
+      protocol: TCP
+      targetPort: 8600
+    - name: consuldns-udp
+      port: 8600
+      protocol: UDP
+      targetPort: 8600
+    selector:
+      deploymentconfig: consul-3
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Route
+  metadata:
+    creationTimestamp: null
+    labels:
+      name: consul
+    name: consul
+  spec:
+    alternateBackends:
+    - kind: Service
+      name: consul-2
+      weight: 20
+    - kind: Service
+      name: consul-3
+      weight: 20
+    host: ${NAMESPACE}.ocapps-pp.mousquetaires.com
+    port:
+      targetPort: http
+    to:
+      kind: Service
+      name: consul-1
+      weight: 20
+    wildcardPolicy: None
+parameters:
+- description: Generate an unique id for the project
+  from: '[A-Z0-9]{4}'
+  generate: expression
+  name: CONSUL_PROJECT_ID
+- name: NAMESPACE
+  displayName: NameSpace 
+  description: Name of the project. It Should be unique
+  required: true

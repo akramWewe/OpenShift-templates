@@ -1,0 +1,8 @@
+{
+ "service": {
+   "name": "app",
+   "tags": ["demo"],
+   "address": "11.1.9.119",
+   "port": 8080
+ }
+}
