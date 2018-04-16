@@ -9,14 +9,14 @@ objects:
     name: compute-resources
   spec:
     hard:
-      requests.cpu: ${requests_cpu}
-      requests.memory: ${requests_memory}
-      requests.storage: ${requests_storage}
-      limits.cpu: ${limits_cpu}
-      limits.memory: ${limits_memory}
-      gold.storageclass.storage.k8s.io/requests.storage: ${gold_requests_storage}
-      silver.storageclass.storage.k8s.io/requests.storage: ${silver_requests_storage}
-      bronze.storageclass.storage.k8s.io/requests.storage: ${bronze_requests_storage}
+      requests.cpu: "${requests_cpu}"
+      requests.memory: "${requests_memory}"
+      requests.storage: "${requests_storage}"
+      limits.cpu: "${limits_cpu}"
+      limits.memory: "${limits_memory}"
+      gold.storageclass.storage.k8s.io/requests.storage: "${gold_requests_storage}"
+      silver.storageclass.storage.k8s.io/requests.storage: "${silver_requests_storage}"
+      bronze.storageclass.storage.k8s.io/requests.storage: "${bronze_requests_storage}"
 parameters:
 - description: La somme des requests cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
   name: requests_cpu
