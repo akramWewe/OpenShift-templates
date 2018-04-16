@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: my-namespace
+objects:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ${name_namespace}
+    labels:
+      name: "${label}"
+parameters:
+- description: "Le nom du namespace"
+  name: name_namespace
+- description: "Label name au niveau du namespace"
+  name: label
