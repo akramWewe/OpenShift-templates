@@ -1,6 +1,6 @@
 namsespace_name=$1
-echo "1- Creation du namespace"
-oc create new-project $namsespace_name
+echo "1- Creation du namespace $namespace_name"
+oc new-project $namsespace_name
 
 echo "2- Creation du la resource quotas"
 oc project $namsespace_name
