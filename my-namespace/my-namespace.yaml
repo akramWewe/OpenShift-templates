@@ -1,81 +1,11 @@
 apiVersion: v1
 kind: Template
 metadata:
-  creationTimestamp: null
   name: my-namespace
 objects:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    name: "$namespace"
+    name: test
     labels:
-      name: "$namespace_label"
-  spec:
-    finalizers:
-    - openshift.io/origin
-    - kubernetes
-  status:
-    phase: Active
-- apiVersion: v1
-  kind: ResourceQuota
-  metadata:
-    creationTimestamp: null
-    name: compute-resources
-  spec:
-    hard:
-      limits.cpu: "2"
-      limits.memory: 2G
-      pods: "4"
-      requests.cpu: "1"
-      requests.memory: 1Gi
-  status: {}
-- apiVersion: v1
-  kind: LimitRange
-  metadata:
-    creationTimestamp: null
-    name: core-resource-limits
-  spec:
-    limits:
-    - max:
-        cpu: $limits_max_cpu_pod
-        memory: 1Gi
-      min:
-        cpu: $limits_min_cpu_pod
-        memory: 6Mi
-      type: Pod
-    - default:
-        cpu: $limits_default_cpu_container
-        memory: 200Mi
-      defaultRequest:
-        cpu: $limits_default_request_cpu_container
-        memory: 100Mi
-      max:
-        cpu: "$limits_max_cpu_container"
-        memory: 1Gi
-      maxLimitRequestRatio:
-        cpu: "$limits_max_ratio_cpu_container"
-      min:
-        cpu: $limits_min_cpu_container
-        memory: 4Mi
-      type: Container
-parameters:
-- description: Nom du namespace
-  name: namespace
-- description: Label du namespace
-  name: label_namespace
-- description: limits_max_cpu_pod
-  name: limits_max_cpu_pod
-- description: limits_min_cpu_pod
-  name: limits_min_cpu_pod
-- description: limits_default_cpu_container
-  name: limits_default_cpu_container
-- description: limits_default_request_cpu_container
-  name: limits_default_request_cpu_container
-- description: limits_max_cpu_container
-  name: limits_max_cpu_container
-- description: limits_max_ratio_cpu_container
-  name: limits_max_ratio_cpu_container
-- description: limits_min_cpu_container
-  name: limits_min_cpu_container
-labels:
-  redis: master
+      name: "label_test"

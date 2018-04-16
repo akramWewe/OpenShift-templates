@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: my-quotas
+objects:
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    name: compute-resources
+  spec:
+    hard:
+      pods: "4"
+      requests.cpu: "1"
+      requests.memory: 1Gi
+      limits.cpu: "2"
+      limits.memory: 2G
+      requests.cpu: "1"
+      requests.memory: 1Gi
+      configmaps: "10"
+      persistentvolumeclaims: "4"
+      requests.storage: "50Gi"
+      gold.storageclass.storage.k8s.io/requests.storage: "10Gi" 
+      silver.storageclass.storage.k8s.io/requests.storage: "20Gi" 
+      silver.storageclass.storage.k8s.io/persistentvolumeclaims: "5" 
+      bronze.storageclass.storage.k8s.io/requests.storage: "0" 
+      bronze.storageclass.storage.k8s.io/persistentvolumeclaims: "0" 
+      replicationcontrollers: "20"
+      secrets: "10"
+      services: "10"
