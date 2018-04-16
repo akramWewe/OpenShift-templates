@@ -1,10 +1,9 @@
 namsespace_name=$1
-echo "1- Creation du namespace $namespace_name"
-oc new-project $namsespace_name
+label_name=$2
 
-echo "2- Creation du la resource quotas"
-oc project $namsespace_name
-oc create -f my-quotas.yaml -n $namsespace_name
-oc process my-quotas -n $namsespace_name | oc create -f -
+echo "Creation du namespace $namespace_name"
+oc process -f my-namespace.yaml -p name_namespace=$namsespace_name -p label=$label_name -n default | oc create -f -
+
+
 
 
