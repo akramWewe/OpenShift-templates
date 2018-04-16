@@ -9,21 +9,37 @@ objects:
     name: compute-resources
   spec:
     hard:
-      pods: "4"
-      requests.cpu: "1"
-      requests.memory: 1Gi
-      limits.cpu: "2"
-      limits.memory: 2G
-      requests.cpu: "1"
-      requests.memory: 1Gi
-      configmaps: "10"
-      persistentvolumeclaims: "4"
-      requests.storage: "50Gi"
-      gold.storageclass.storage.k8s.io/requests.storage: "10Gi" 
-      silver.storageclass.storage.k8s.io/requests.storage: "20Gi" 
-      silver.storageclass.storage.k8s.io/persistentvolumeclaims: "5" 
-      bronze.storageclass.storage.k8s.io/requests.storage: "0" 
-      bronze.storageclass.storage.k8s.io/persistentvolumeclaims: "0" 
-      replicationcontrollers: "20"
-      secrets: "10"
-      services: "10"
+      requests.cpu: $requests_cpu
+      requests.memory: $requests_memory
+      requests.storage: $requests_storage
+      limits.cpu: $limits_cpu
+      limits.memory: $limits_memory    
+      gold.storageclass.storage.k8s.io/requests.storage: $gold_requests_storage 
+      silver.storageclass.storage.k8s.io/requests.storage: $silver_requests_storage 
+      bronze.storageclass.storage.k8s.io/requests.storage: $silver_requests_storage
+parameters:
+- description: La somme des requests cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+  name: requests_cpu
+  default: 1
+- description: La somme des requests mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+  name: requests_memory
+  default: 1Gi
+- description: La somme des persistent volume claim du projet ne doit pas être > à cette valeur. 
+  name: requests_storage
+  default: 50Gi
+- description: La somme des limites cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+  name: limits_cpu
+  default: 2
+- description: La somme des limites mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+  name: limits_memory
+  default: 2Gi
+- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage Gold ne doit pas être > à cette valeur. 
+  name: gold_requests_storage
+  default: 10Gi
+- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage silver ne doit pas être > à cette valeur. 
+  name: silver_requests_storage
+  default: 20Gi
+- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage bronze ne doit pas être > à cette valeur. 
+  name: silver_requests_storage
+  default: 0
+
