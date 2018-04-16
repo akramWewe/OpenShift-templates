@@ -18,28 +18,28 @@ objects:
       silver.storageclass.storage.k8s.io/requests.storage: "${silver_requests_storage}"
       bronze.storageclass.storage.k8s.io/requests.storage: "${bronze_requests_storage}"
 parameters:
-- description: La somme des requests cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+- description: "La somme des requests cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur."
   name: requests_cpu
   value: 1
-- description: La somme des requests mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+- description: "La somme des requests mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur."
   name: requests_memory
   value: 1Gi
-- description: La somme des persistent volume claim du projet ne doit pas être > à cette valeur. 
+- description: "La somme des persistent volume claim du projet ne doit pas être > à cette valeur."
   name: requests_storage
   value: 50Gi
-- description: La somme des limites cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+- description: "La somme des limites cpu des pods ayant l'état non-terminal ne doit pas être > à cette valeur."
   name: limits_cpu
   value: 2
-- description: La somme des limites mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur. 
+- description: "La somme des limites mémoire des pods ayant l'état non-terminal ne doit pas être > à cette valeur." 
   name: limits_memory
   value: 2Gi
-- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage Gold ne doit pas être > à cette valeur.
+- description: "Dans le projet, la somme des persistent volume claim ayant une classe de sotkage Gold ne doit pas être > à cette valeur."
   name: gold_requests_storage
   value: 10Gi
-- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage silver ne doit pas être > à cette valeur. 
+- description: "Dans le projet, la somme des persistent volume claim ayant une classe de sotkage silver ne doit pas être > à cette valeur." 
   name: silver_requests_storage
   value: 20Gi
-- description: Dans le projet, la somme des persistent volume claim ayant une classe de sotkage bronze ne doit pas être > à cette valeur. 
+- description: "Dans le projet, la somme des persistent volume claim ayant une classe de sotkage bronze ne doit pas être > à cette valeur."
   name: bronze_requests_storage
   value: 0
 
