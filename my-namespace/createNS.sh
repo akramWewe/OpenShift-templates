@@ -12,7 +12,3 @@ oc process -f my-namespace-template.yaml -p name_namespace=$namsespace_name \
 -p site=$site \
 -p zone=$zone \
 -n default | oc create -f -
-
-
-
-

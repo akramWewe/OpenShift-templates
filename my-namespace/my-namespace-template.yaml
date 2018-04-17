@@ -12,7 +12,7 @@ objects:
     annotations:
       openshift.io/node-selector: site=${site}"
       openshift.io/node-selector: zone=${zone}"
-      openshift.io/description: "Pods du projet ${name_namespace} sera deployé au niveau du site ${site} de la zone ${zone}"
+      openshift.io/description: "Pods du ${name_namespace} à deployer dans le site ${site} et la zone ${zone}"
 parameters:
 - description: "Le nom du namespace"
   name: name_namespace
