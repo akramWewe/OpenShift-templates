@@ -1,4 +1,4 @@
-namsespace_name=$1
+namespace_name=$1
 requests_cpu=$2
 requests_memory=$3
 requests_storage=$4
@@ -9,6 +9,9 @@ silver_requests_storage=$8
 bronze_requests_storage=$9
 
 echo "Initialiser les resources au namespace $namsespace_name"
+
+oc project $namespace_name
+
 oc process -f namespace-resources-template.yaml \
 -p requests_cpu=$requests_cpu \
 -p requests_memory=$requests_memory \
@@ -18,4 +21,4 @@ oc process -f namespace-resources-template.yaml \
 -p gold_requests_storage=$gold_requests_storage \
 -p silver_requests_storage=$silver_requests_storage \
 -p bronze_requests_storage=$bronze_requests_storage \
--n $namsespace_name | oc create -f -
+-n $namespace_name | oc create -f -
