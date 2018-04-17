@@ -8,7 +8,12 @@ objects:
   metadata:
     name: ${name_namespace}
     labels:
-      name: "${label}"
+      name: "${environnement}"
+    annotations:
+      openshift.io/node-selector: site=${site}"
+      openshift.io/node-selector: zone=${zone}"
+      openshift.io/description: "Pods du projet ${name_namespace} sera deployé au niveau du site ${site} de la zone ${zone}"
+      openshift.io/display-name: ""
 parameters:
 - description: "Le nom du namespace"
   name: name_namespace
