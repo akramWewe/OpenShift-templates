@@ -7,7 +7,7 @@ oc project default
 
 echo "Creation du namespace $namespace_name"
 oc project default
-oc process -f my-namespace.yaml -p name_namespace=$namsespace_name \
+oc process -f my-namespace-template.yaml -p name_namespace=$namsespace_name \
 -p environnement=$environnement \
 -p site=$site \
 -p zone=$zone \
