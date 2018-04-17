@@ -16,11 +16,14 @@ limits_cpu=$8
 #The sum of memory limits across all pods in a non-terminal state cannot exceed this value.
 limits_memory=$9
 # Across all persistent volume claims in a project, the sum of storage requested in the gold storage class cannot exceed this value.
-gold_requests_storage='$10'
+gold_requests_storage=${10}
+echo "gold_requests_storage = $gold_requests_storage"
 # Across all persistent volume claims in a project, the sum of storage requested in the silver storage class cannot exceed this value.
-silver_requests_storage='$11'
+silver_requests_storage=${11}
+echo "silver_requests_storage = $silver_requests_storage"
 # Across all persistent volume claims in a project, the sum of storage requested in the bronze storage class cannot exceed this value.
-bronze_requests_storage='$12'
+bronze_requests_storage=${12}
+echo "bronze_requests_storage = $bronze_requests_storage"
 
 #Exemple: ./createNS.sh test PACST default
 ./createNS.sh ${namsespace_name} ${site} ${zone}
