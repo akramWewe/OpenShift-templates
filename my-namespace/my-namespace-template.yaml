@@ -18,3 +18,9 @@ parameters:
   name: name_namespace
 - description: "Label name au niveau du namespace"
   name: label
+- description: "Zone de deploiement des projets au niveau de ce namespace"
+  name: zone
+- description: "Site de deploiement des projets au niveau de ce namespace"
+  name: site
+- description: "Environnement à provisionner (ETUDE,TEST,PREPROD,PROD)"
+  name: environnement

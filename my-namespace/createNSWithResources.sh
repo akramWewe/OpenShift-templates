@@ -1,5 +1,5 @@
 namsespace_name=$1
-#DEV, TEST, PREPROD, PROD
+#ETUDE, TEST, PREPROD, PROD
 environnement=$2
 #PACST,PACSV
 site=$3
