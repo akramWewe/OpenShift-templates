@@ -1,0 +1,25 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: {{ .Values.apps.app_1.images.image_1.name | quote }}
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    description: Keeps track of changes in the application image
+    openshift.io/image.insecureRepository: "true"
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Values.apps.app_1.name }}
+spec:
+  dockerImageRepository: {{ .Values.registries.ocp.host }}:{{ .Values.registries.ocp.port }}/{{ .Values.namespace }}/{{ .Values.apps.app_1.images.image_1.name }}
+  tags:
+    -
+      name: {{ .Values.apps.app_1.images.image_1.tag }}
+      annotations: null
+      from:
+        kind: DockerImage
+        name: '{{ .Values.registries.nexus.host }}/{{ .Values.namespace }}/{{ .Values.apps.app_1.images.image_1.name }}:{{ .Values.apps.app_1.images.image_1.tag  }}'
+      generation: 2
+      importPolicy: {  }
+

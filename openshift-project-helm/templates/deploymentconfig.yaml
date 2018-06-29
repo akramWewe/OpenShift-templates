@@ -1,0 +1,115 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: {{ .Values.apps.app_1.name  | quote }}
+  annotations:
+    description: Defines how to deploy the application server
+    template.alpha.openshift.io/wait-for-ready: 'true'
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Values.apps.app_1.name }}
+spec:
+  strategy:
+    type: Rolling
+  triggers:
+  - type: ImageChange
+    imageChangeParams:
+      automatic: true
+      containerNames:
+      - {{ .Values.apps.app_1.name }}
+      from:
+        kind: ImageStreamTag
+        name: {{ print .Values.apps.app_1.images.image_1.name ":latest" | quote }}
+  - type: ConfigChange
+  replicas: {{ .Values.apps.app_1.deployment.replicas }}
+  selector:
+    name: {{ .Values.apps.app_1.name | quote }}
+  template:
+    metadata:
+      name: {{ .Values.apps.app_1.name | quote }}
+      labels:
+        name: {{ .Values.apps.app_1.name| quote }}
+    spec:
+      containers:
+      - name: {{ .Values.apps.app_1.name }}
+        image:  {{ .Values.registries.ocp.host }}:{{ .Values.registries.ocp.port }}/{{ .Values.apps.app_1.images.image_1.name }}:{{ .Values.apps.app_1.images.image_1.tag }}
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: connectors/multiplicator/status
+            port: 8083
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: connectors/multiplicator/status
+            port: 8083
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 8083
+        resources:
+          requests:
+            cpu: {{ .Values.apps.app_1.deployment.cpu_request | quote }} 
+            memory: {{ .Values.apps.app_1.deployment.memory_request | quote }}
+          limits:
+            memory: {{ .Values.apps.app_1.deployment.memory_limit | quote }}
+            cpu: {{ .Values.apps.app_1.deployment.cpu_limit | quote }}
+        env:
+            - name: CONNECT_BOOTSTRAP_SERVERS
+              value: '{{ .Values.CONNECT_BOOTSTRAP_SERVERS }}'
+            - name: CONNECT_REST_ADVERTISED_HOST_NAME
+              value: '{{ .Values.CONNECT_REST_ADVERTISED_HOST_NAME }}'
+            - name: CONNECT_REST_PORT
+              value: '{{ .Values.CONNECT_REST_PORT }}'
+            - name: CONNECT_GROUP_ID
+              value: '{{ .Values.CONNECT_GROUP_ID }}'
+            - name: CONNECT_CLIENT_ID
+              value: '{{ .Values.CONNECT_CLIENT_ID }}'
+            - name: CONNECT_CONFIG_STORAGE_TOPIC
+              value: '{{ .Values.CONNECT_CONFIG_STORAGE_TOPIC }}'
+            - name: CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR }}'
+            - name: CONNECT_CONFIG_STORAGE_PARTITIONS
+              value: '{{ .Values.CONNECT_CONFIG_STORAGE_PARTITIONS }}'
+            - name: CONNECT_STATUS_STORAGE_TOPIC
+              value: '{{ .Values.CONNECT_STATUS_STORAGE_TOPIC }}'
+            - name: CONNECT_STATUS_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.CONNECT_STATUS_STORAGE_REPLICATION_FACTOR }}'
+            - name: CONNECT_STATUS_STORAGE_PARTITIONS
+              value: '{{ .Values.CONNECT_STATUS_STORAGE_PARTITIONS }}'
+            - name: CONNECT_OFFSET_STORAGE_TOPIC
+              value: '{{ .Values.CONNECT_OFFSET_STORAGE_TOPIC }}'
+            - name: CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR
+              value: '{{ .Values.CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR }}'
+            - name: CONNECT_OFFSET_STORAGE_PARTITIONS
+              value: '{{ .Values.CONNECT_OFFSET_STORAGE_PARTITIONS }}'
+            - name: CONNECT_KEY_CONVERTER
+              value: '{{ .Values.CONNECT_KEY_CONVERTER }}'
+            - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLED
+              value: '{{ .Values.CONNECT_KEY_CONVERTER_SCHEMAS_ENABLED }}'
+            - name: CONNECT_VALUE_CONVERTER
+              value: '{{ .Values.CONNECT_VALUE_CONVERTER }}'
+            - name: CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL
+              value: '{{ .Values.CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL }}'
+            - name: CONNECT_INTERNAL_KEY_CONVERTER
+              value: '{{ .Values.CONNECT_INTERNAL_KEY_CONVERTER }}'
+            - name: CONNECT_INTERNAL_VALUE_CONVERTER
+              value: '{{ .Values.CONNECT_INTERNAL_VALUE_CONVERTER }}'
+            - name: CONNECT_LOG4J_ROOT_LOGLEVEL
+              value: '{{ .Values.CONNECT_LOG4J_ROOT_LOGLEVEL }}'
+            - name: CONNECT_LOG4J_LOGGERS
+              value: '{{ .Values.CONNECT_LOG4J_LOGGERS }}'
+            - name: CONNECT_ZOOKEEPER_CONNECT
+              value: '{{ .Values.CONNECT_ZOOKEEPER_CONNECT }}'
+            - name: CONNECT_PLUGIN_PATH
+              value: '{{ .Values.CONNECT_PLUGIN_PATH }}'

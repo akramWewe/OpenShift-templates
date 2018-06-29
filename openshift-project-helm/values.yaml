@@ -1,0 +1,62 @@
+# Namespace: The nameSpace name.
+namespace: hermes
+# Environnement par defaut
+env: dev
+# Informations concernant les registries
+registries:
+# Informations concernant le registry ocp
+  ocp:
+# le hostname du registry ocp
+    host: docker-registry.default.svc
+# le port du registry ocp
+    port: 5000
+# Informations concernant le registry nexus
+  nexus:
+# le hostname du registry nexus
+    host: docker-release-stime.mousquetaires.com
+# Informations concernant les applications installé dans ce namespace
+apps:
+# Informations concernant l'applicaiton une installée dans ce namespace
+ app_1:
+# Le nom de l'application installée dans ce namespace
+  name: talaria-multiplicateur
+# Informations concernant les images utilisées par l'application
+  images:
+# Informations concernant l'image une utilisée par l'application
+   image_1:
+# nom de l'image
+    name: talaria-multiplicator
+# tag de l'image
+    tag: latest
+# Informations concernant le deploymentConfig une utilisée par l'application
+  deployment:
+# Le nombre de replicas concernant  l'application
+    replicas: 3
+# Memory Limit
+    memory_limit: 512Mi
+# Cpu Limit
+    cpu_limit: 1
+# Memory request
+    memory_request: 512Mi
+# Cpu Request
+    cpu_request: 1
+# Conditions pour autoscaler l'application
+    autoscaler:
+# Maximum autoscaler down si dépassemnt des 3 réplicas
+     maxReplicas: 3
+# Maximum autoscaler up si nombre de réplicas à 1
+     minReplicas: 3
+# Cpu utilisation est à 80 % maximum pour autoscaler. 
+     cpu_utilization: 80
+# Informations concernant les services utilises par l'application
+  services:
+# Informations du service_1 utilisé par l'application
+    service_1:
+# Le nom du service
+     name: multiplicateur
+# Le nom du deploiement associé au service
+     deployment_selector: multiplicateur
+
+  
+
+

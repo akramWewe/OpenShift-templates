@@ -1,0 +1,11 @@
+name: hermes-chart
+version: 0.1
+description: Projet Hermes
+keywords:
+- hermes
+- talaria-multiplicator 
+sources:
+- http://git-stime.mousquetaires.com/openshift/openshift-templates.git
+maintainers:
+- name: Akram BLOUZA
+  email: akram.blouza@wescale.fr

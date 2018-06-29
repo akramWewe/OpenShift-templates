@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: talaria-multiplicateur
+  namespace: hermes
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Values.apps.app_1.name }}
+release: {{ .Release.Name }}
+spec:
+  maxReplicas: {{ .Values.apps.app_1.deployment.autoscaler.maxReplicas | quote }} 
+  minReplicas: {{ .Values.apps.app_1.deployment.autoscaler.minReplicas | quote }} 
+  targetCPUUtilizationPercentage: {{ .Values.apps.app_1.deployment.autoscaler.cpu_utilization | quote }} 
+  scaleTargetRef:
+    apiVersion: v1
+    kind: DeploymentConfig
+    name: talaria-multiplicateur

@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.apps.app_1.services.service_1.name | quote }}
+  annotations:
+    description: Exposes and load balances the application pods
+spec:
+  ports:
+  - name: service
+    port: 8083
+    targetPort: 8083
+  selector:
+    name: {{ .Values.apps.app_1.name | quote }}
