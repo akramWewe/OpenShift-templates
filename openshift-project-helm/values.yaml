@@ -13,7 +13,6 @@ registries:
 # Informations concernant le registry nexus
   nexus:
 # le hostname du registry nexus
-    host: docker-release-stime.mousquetaires.com
 # Informations concernant les applications installé dans ce namespace
 apps:
 # Informations concernant l'applicaiton une installée dans ce namespace
